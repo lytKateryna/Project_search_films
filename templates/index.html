@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Movie Finder - Поиск фильмов{% endblock %}
+
+{% block body %}
+<div class="layout">
+    <!-- Левая колонка - Фильтры -->
+    <aside class="sidebar">
+        <!-- Поиск по названию -->
+        <h4>Поиск по названию</h4>
+        <div class="search-box">
+            <input id="searchInput" type="text" placeholder="Введите название фильма...">
+        </div>
+        <button id="searchByNameBtn" class="search-btn" onclick="performSearch()">Искать</button>
+
+        <!-- Диапазон годов -->
+        <h4>Диапазон годов</h4>
+        <div class="year-range-box">
+            <input id="yearFrom" type="number" placeholder="От" min="1900" max="2100">
+            <input id="yearTo" type="number" placeholder="До" min="1900" max="2100">
+            <select id="yearRangeGenre">
+                <option value="">Все жанры</option>
+            </select>
+            <button id="searchByFiltersBtn" class="search-btn" onclick="searchByYearRange()">Искать</button>
+        </div>
+
+        <!-- Жанры -->
+        <h4>Жанры</h4>
+        <div id="genresList" class="genres-list"></div>
+        
+    </aside>
+
+    <!-- Правая колонка - Контент -->
+    <main class="content">
+        <!-- Блок "Новинки" -->
+        <section class="content-section">
+            <h2>🔥 Новинки</h2>
+            <div id="newMovies" class="movies-grid"></div>
+        </section>
+
+        <!-- Результаты поиска -->
+        <section id="searchResults" class="content-section" style="display: none;">
+            <h2>Результаты поиска</h2>
+            <div id="moviesList" class="movies-grid"></div>
+            
+            <!-- Пагинация -->
+            <div id="pagination" class="pagination">
+                <button id="prevBtn" onclick="previousPage()" disabled>Назад</button>
+                <span id="pageInfo">Страница 1</span>
+                <button id="nextBtn" onclick="nextPage()">Вперёд</button>
+            </div>
+        </section>
+
+        <!-- Сообщения о состоянии -->
+        <div id="loadingMessage" class="status-message loading" style="display: none;">
+            <div class="loader"></div>
+            <p>Загрузка данных...</p>
+        </div>
+        
+        <div id="noResultsMessage" class="status-message no-results" style="display: none;">
+            <p>Ничего не найдено. Попробуйте изменить фильтры.</p>
+        </div>
+        
+        <div id="errorMessage" class="status-message error" style="display: none;">
+            <p>Ошибка загрузки данных. Попробуйте позже.</p>
+            <button onclick="window.searchManager?.loadNewMovies()" class="retry-btn">Повторить</button>
+        </div>
+    </main>
+</div>
+
+<script>
+
+// Глобальные функции для onclick обработчиков
+function performSearch() {
+    console.log('performSearch called, searchManager exists:', !!window.searchManager);
+    
+    if (!window.searchManager) {
+        console.log('SearchManager not ready, waiting...');
+        // Wait a bit and try again
+        setTimeout(() => {
+            console.log('Retry - searchManager exists:', !!window.searchManager);
+            if (window.searchManager) {
+                window.searchManager.searchByKeyword();
+            } else {
+                console.error('SearchManager still not available after delay');
+            }
+        }, 500);
+        return;
+    }
+    
+    window.searchManager.searchByKeyword();
+}
+
+function searchByYearRange() {
+    if (window.searchManager) window.searchManager.searchByYearRange();
+}
+
+function previousPage() {
+    if (window.searchManager) window.searchManager.previousPage();
+}
+
+function nextPage() {
+    if (window.searchManager) window.searchManager.nextPage();
+}
+</script>
+{% endblock %}

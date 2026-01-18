@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Movie Finder{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico" onerror="this.href='data:image/x-icon;base64,'">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <a href="/" class="logo-link">
+                <h1 class="logo">Movie Planet</h1>
+            </a>
+            <nav class="header-nav">
+                <div class="dropdown">
+                    <button class="nav-btn dropdown-btn">Популярное</button>
+                    <div class="dropdown-content">
+                        <!-- Содержимое будет загружено динамически через PopularSearchesManager -->
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button class="nav-btn unique-btn">Уникальное</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+    
+    {% block body %}{% endblock %}
+    
+    <script type="module" src="/static/js/main.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

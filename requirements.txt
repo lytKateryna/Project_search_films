@@ -1,0 +1,9 @@
+pydantic
+fastapi>=0.128.0
+uvicorn[standard]
+pydantic-settings
+mysql-connector-python>=9.5.0
+pymongo
+requests
+jinja2
+python-dotenv

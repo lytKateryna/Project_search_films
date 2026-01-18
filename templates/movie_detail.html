@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ film.title }} - Детали фильма{% endblock %}
+
+{% block body %}
+<div class="movie-detail-container">
+    <div class="movie-detail-header">
+        <button onclick="window.history.back()" class="back-button">← Назад</button>
+        <h1>{{ film.title }}</h1>
+    </div>
+    
+    <div class="movie-detail-content">
+        <div class="movie-poster-section">
+            <img src="{{ film.poster_url or '/static/images/no-poster.svg' }}" 
+                 alt="{{ film.title }}" 
+                 class="movie-detail-poster"
+                 onerror="this.src='/static/images/no-poster.svg'">
+        </div>
+        
+        <div class="movie-info-section">
+            <div class="movie-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Год:</span>
+                    <span class="meta-value">{{ film.release_year or film.year or 'N/A' }}</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">Рейтинг:</span>
+                    <span class="meta-value">{{ film.rating or 'N/A' }}</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">Длительность:</span>
+                    <span class="meta-value">{{ film.length or 'N/A' }} мин</span>
+                </div>
+            </div>
+            
+            {% if film.description %}
+            <div class="movie-description">
+                <h3>Описание</h3>
+                <p>{{ film.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
