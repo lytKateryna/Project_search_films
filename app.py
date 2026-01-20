@@ -1,4 +1,3 @@
-import os
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -9,8 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
-
 from routes.films import router as films_router
 from routes.pages import router as pages_router
 from routes.meta import router as meta_router

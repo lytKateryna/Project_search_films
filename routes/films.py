@@ -101,14 +101,6 @@ def search_films_by_keyword_route(query: str, offset: int = Query(0, ge=0), limi
             offset=offset
         )
         result["query"] = query
-        # Временно отключаем постеры для ускорения поиска
-        # try:
-        #     result["items"] = add_posters(result["items"])
-        # except Exception as e:
-        #     print(f"Error adding posters to keyword search results: {e}")
-        #     # Ensure all films have at least a default poster
-        #     for film in result["items"]:
-        #         film["poster_url"] = "/static/images/no-poster.svg"
         
         try:
             log_search_keyword(search_type='keyword', params={"query": query})
@@ -232,7 +224,7 @@ def search_films_by_year_route(year: int, offset: int = Query(0, ge=0), limit: i
             offset=offset
         )
         result["year"] = year
-        # result["items"] = add_posters(result["items"])  # Commented out to speed up response
+
         
         try:
             log_search_keyword(search_type='year', params={"year": year})

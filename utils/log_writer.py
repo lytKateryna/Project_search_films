@@ -1,17 +1,18 @@
 from datetime import datetime, timezone
 from pymongo import MongoClient
+from pymongo.collection import Collection
 from settings import settings
 
-# Lazy initialization to avoid blocking application startup when MongoDB is unavailable
-_client = None
-_collection = None
-_stats = None
+# Ленивая инициализация позволяет избежать блокировки запуска приложения при недоступности MongoDB
+_client: MongoClient | None = None
+_collection: Collection | None = None
+_stats: Collection | None = None
 
 def _init_mongo():
     """Инициализация подключения к MongoDB с отложенной загрузкой"""
     global _client, _collection, _stats
     if _client is not None:
-       return
+        return
     try:
         _client = MongoClient(settings.MONGO_URL, serverSelectionTimeoutMS=500)
         db = _client[settings.MONGO_DB]
@@ -45,10 +46,10 @@ def log_films_id(ids: list[int]) -> None:
         return
     now = datetime.now(timezone.utc).astimezone().isoformat()
 
-    for id in ids:
+    for film_id in ids:
         try:
             _stats.update_one(
-                {"film_id": id},
+                {"film_id": film_id},
                 {
                     "$inc": {"search_impressions": 1},
                     "$set": {"last_seen_at": now},

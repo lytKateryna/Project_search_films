@@ -3,7 +3,7 @@ fastapi>=0.128.0
 uvicorn[standard]
 pydantic-settings
 mysql-connector-python>=9.5.0
-pymongo
+pymongo>=4.0.0
 requests
 jinja2
 python-dotenv

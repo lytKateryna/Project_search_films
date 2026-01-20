@@ -5,7 +5,7 @@ def paginate(fetch_items, fetch_total, **kwargs):
     Возвращает словарь с items, total, offset, limit, count
     """
     items = fetch_items(**kwargs)
-    # Remove limit and offset for fetch_total as they don't need them
+    # Удаление параметров limit и offset для fetch_total, поскольку они им не нужны.
     total_kwargs = {k: v for k, v in kwargs.items() if k not in ('limit', 'offset')}
     total = fetch_total(**total_kwargs)
     offset = kwargs.get('offset', 0)

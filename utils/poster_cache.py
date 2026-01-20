@@ -1,6 +1,5 @@
 import json
 import os
-import tempfile
 import threading
 import time
 import random
@@ -16,7 +15,7 @@ def _load_cache() -> None:
         try:
             with open(CACHE_FILE, "r", encoding="utf-8") as f:
                 _cache = json.load(f)
-        except Exception:
+        except (json.JSONDecodeError, OSError, IOError):
             _cache = {}
     else:
         _cache = {}
