@@ -64,7 +64,6 @@ Project_search_films/
 ├── settings.py                # Настройки окружения
 ├── schemas.py                 # Pydantic модели данных
 ├── requirements.txt           # Зависимости Python
-├── .env.example              # Пример конфигурации окружения
 │
 ├── routes/                    # API маршруты
 │   ├── films.py              # Эндпоинты для работы с фильмами
@@ -125,12 +124,7 @@ pip install -r requirements.txt
 ```
 
 ### ⚙️ 4. Настройка окружения
-Скопируйте файл конфигурации и отредактируйте его:
-```bash
-cp .env.example .env
-```
-
-Отредактируйте `.env` файл с вашими параметрами:
+Создайте файл `.env` с вашими параметрами:
 ```env
 # MySQL Database Configuration
 MYSQL_HOST=localhost
