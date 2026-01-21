@@ -13,8 +13,8 @@ ENV/
 
 .env
 .env.
-*.env
-.env.example
+*.envgit
+
 
 .idea/
 .vscode/
@@ -38,3 +38,6 @@ htmlcov/
 
 *.sqlite3
 *.db
+
+.env.example
+.env.example
