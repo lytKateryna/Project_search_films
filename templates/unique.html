@@ -4,91 +4,135 @@
 
 {% block body %}
 <div class="layout">
-    <!-- Левая колонка - Фильтры -->
-    <aside class="sidebar">
-        <!-- Поиск по названию -->
-        <h4>Поиск по названию</h4>
-        <div class="search-box">
-            <input id="searchInput" type="text" placeholder="Введите название фильма...">
-        </div>
-
-        <!-- Диапазон годов -->
-        <h4>Диапазон годов</h4>
-        <div class="year-range-box">
-            <input id="yearFrom" type="number" placeholder="От" min="1900" max="2100">
-            <input id="yearTo" type="number" placeholder="До" min="1900" max="2100">
-            <select id="yearRangeGenre">
-                <option value="">Все жанры</option>
-            </select>
-        </div>
-
-        <!-- Жанры -->
-        <h4>Жанры</h4>
-        <div id="genresList" class="genres-list"></div>
-        
-        <!-- Сброс фильтров -->
-        <button id="resetFilters" class="reset-filters-btn" onclick="resetAllFilters()">Сбросить фильтры</button>
-    </aside>
-
-    <!-- Правая колонка - Контент -->
-    <main class="content">
-        <!-- Блок "Уникальное" -->
+    <main class="content" style="width: 100%; max-width: 1200px; margin: 0 auto;">
         <section class="content-section">
-            <h2>🎯 Уникальные фильмы</h2>
-            <p>Откройте для себя необычные и малоизвестные фильмы, которые заслуживают вашего внимания.</p>
-            <div id="uniqueMovies" class="movies-grid"></div>
-        </section>
-
-        <!-- Результаты поиска -->
-        <section id="searchResults" class="content-section" style="display: none;">
-            <h2>Результаты поиска</h2>
-            <div id="moviesList" class="movies-grid"></div>
+            <h2>🎯 Уникальные поисковые запросы</h2>
+            <p>Последние уникальные поисковые запросы пользователей.</p>
             
-            <!-- Пагинация -->
-            <div id="pagination" class="pagination">
-                <button id="prevBtn" onclick="previousPage()" disabled>Назад</button>
-                <span id="pageInfo">Страница 1</span>
-                <button id="nextBtn" onclick="nextPage()">Вперёд</button>
+            <button onclick="loadUniqueQueries()" style="margin-bottom: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">🔄 Загрузить запросы</button>
+            
+            <div id="loadingMessage" style="text-align: center; padding: 20px; display: none;">
+                <div class="loader" style="border: 2px solid #f3f3f3; border-top: 2px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
+                <p>Загрузка...</p>
             </div>
+            
+            <div id="errorMessage" style="text-align: center; padding: 20px; color: #e74c3c; display: none;">
+                <p>Ошибка загрузки. Попробуйте еще раз.</p>
+                <button onclick="loadUniqueQueries()" style="margin-top: 10px; padding: 5px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Повторить</button>
+            </div>
+            
+            <div id="queriesList" class="unique-queries-grid"></div>
         </section>
-
-        <!-- Сообщения о состоянии -->
-        <div id="loadingMessage" class="status-message loading" style="display: none;">
-            <div class="loader"></div>
-            <p>Загрузка данных...</p>
-        </div>
-        
-        <div id="noResultsMessage" class="status-message no-results" style="display: none;">
-            <p>Ничего не найдено. Попробуйте изменить фильтры.</p>
-        </div>
-        
-        <div id="errorMessage" class="status-message error" style="display: none;">
-            <p>Ошибка загрузки данных. Попробуйте позже.</p>
-            <button onclick="window.searchManager?.loadNewMovies()" class="retry-btn">Повторить</button>
-        </div>
     </main>
 </div>
 
 <script>
-// Глобальные функции для onclick обработчиков
-function performSearch() {
-    if (window.searchManager) window.searchManager.searchByKeyword();
+async function loadUniqueQueries() {
+    console.log('Начинаю загрузку уникальных запросов...');
+    
+    const loadingEl = document.getElementById('loadingMessage');
+    const errorEl = document.getElementById('errorMessage');
+    const listEl = document.getElementById('queriesList');
+    
+    // Показываем загрузку
+    loadingEl.style.display = 'block';
+    errorEl.style.display = 'none';
+    listEl.innerHTML = '';
+    
+    try {
+        console.log('Отправляю запрос к API...');
+        const response = await fetch('/meta/unique?limit=10');
+        console.log('Ответ получен:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Данные получены:', data);
+        
+        loadingEl.style.display = 'none';
+        
+        if (data.items && data.items.length > 0) {
+            console.log('Отображаю', data.items.length, 'запросов');
+            
+            data.items.forEach((item, index) => {
+                const query = item.query || 'Поиск';
+                const time = item.timestamp ? new Date(item.timestamp).toLocaleString('ru-RU') : '';
+                const type = item.search_type || 'keyword';
+                const typeLabel = type === 'keyword' ? 'Поиск' : type === 'genre' ? 'Жанр' : 'Год';
+                
+                // Создаем элемент через DOM API для избежания проблем с кавычками
+                const card = document.createElement('div');
+                card.className = 'unique-query-card';
+                card.style.cssText = 'background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s ease;';
+                card.onclick = () => searchFor(query);
+                
+                card.innerHTML = `
+                    <div style="font-size: 16px; color: #fff; margin-bottom: 8px; font-weight: bold;">"${query}"</div>
+                    <div style="font-size: 12px; color: #999; display: flex; justify-content: space-between;">
+                        <span style="background: #e50914; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">${typeLabel}</span>
+                        <span>${time}</span>
+                    </div>
+                `;
+                
+                listEl.appendChild(card);
+            });
+            
+            console.log('Список успешно отображен');
+        } else {
+            console.log('Нет данных для отображения');
+            listEl.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">Пока нет уникальных поисковых запросов</p>';
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки:', error);
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+    }
 }
 
-function searchByYearRange() {
-    if (window.searchManager) window.searchManager.searchByYearRange();
+function searchFor(query) {
+    console.log('Выполняю поиск по запросу:', query);
+    window.location.href = `/?q=${encodeURIComponent(query)}`;
 }
 
-function resetAllFilters() {
-    if (window.searchManager) window.searchManager.resetAllFilters();
-}
-
-function previousPage() {
-    if (window.searchManager) window.searchManager.previousPage();
-}
-
-function nextPage() {
-    if (window.searchManager) window.searchManager.nextPage();
-}
+// Автоматическая загрузка при открытии страницы
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Страница загружена, начинаю загрузку запросов...');
+    setTimeout(loadUniqueQueries, 1000);
+});
 </script>
+
+<style>
+.unique-queries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.unique-query-card:hover {
+    background: #333 !important;
+    border-color: #e50914 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .unique-queries-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .unique-query-card {
+        margin-bottom: 8px !important;
+    }
+}
+</style>
 {% endblock %}

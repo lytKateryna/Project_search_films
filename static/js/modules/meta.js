@@ -2,6 +2,21 @@
 export class MetaAPI {
     static BASE_URL = '/meta';
     
+    // Получить уникальные поисковые запросы
+    static async getUniqueQueries(limit = 5) {
+        try {
+            const response = await fetch(`${this.BASE_URL}/unique?limit=${limit}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching unique queries:', error);
+            throw error;
+        }
+    }
+    
     // Получить последние поисковые запросы
     static async getRecentQueries(limit = 5) {
         try {

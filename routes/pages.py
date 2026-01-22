@@ -22,7 +22,6 @@ def movie_detail_page(request: Request, film_id: int):
 def unique_page(request: Request):
     return templates.TemplateResponse("unique.html", {"request": request})
 
-
 @router.get("/health")
 def health():
     return {"status": "ok"}

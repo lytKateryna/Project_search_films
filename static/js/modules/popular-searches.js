@@ -124,7 +124,7 @@ export class PopularSearchesManager {
             this.showLoading();
             
             // Загружаем данные
-            const data = await this.fetchRecentSearches();
+            const data = await this.fetchRecentSearches('popular');
             
             // Обновляем кэш
             this.cache = data;
@@ -150,7 +150,7 @@ export class PopularSearchesManager {
     }
     
     // Загрузка данных с API
-    async fetchRecentSearches(type = 'recent') {
+    async fetchRecentSearches(type = 'popular') {
         console.log(`Fetching ${type} searches from API...`);
         const { MetaAPI } = await import('./meta.js');
         
@@ -208,7 +208,7 @@ export class PopularSearchesManager {
         
         // Определяем, популярные это запросы или последние
         const isPopular = items.some(item => item.count !== undefined);
-        const headerText = isPopular ? 'Популярные запросы' : 'Последние поиски';
+        const headerText = 'Популярные запросы';
         
         let html = `<div class="popular-searches-header">${headerText}</div>`;
         html += '<div class="popular-searches-list">';

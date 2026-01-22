@@ -65,6 +65,24 @@ def popular_queries(limit: int = Query(5, ge=1, le=20)):
     }
 
 
+@router.get("/unique")
+def unique_queries(limit: int = Query(5, ge=1, le=20)):
+    """
+    Получить уникальные поисковые запросы (без дубликатов)
+    """
+    try:
+        print(f"Received request for unique queries with limit: {limit}")
+        items = get_recent_queries(limit)  # Используем ту же функцию, так как она теперь возвращает уникальные
+        print(f"Successfully retrieved {len(items)} unique items")
+        result = {
+            "items": items,
+            "count": len(items)
+        }
+        return log_and_return(result, "unique_queries")
+    except Exception as e:
+        handle_endpoint_error("unique_queries", e)
+
+
 @router.get("/recent")
 def recent_queries(limit: int = Query(5, ge=1, le=20)):
     """

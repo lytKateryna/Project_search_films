@@ -114,13 +114,45 @@ def get_popular_queries(limit: int = 5):
 def get_recent_queries(limit: int = 5):
     """уникальные запросы"""
     try:
-        # Сначала пробуем новый формат (search_type, params)
-        cursor = collection.find().sort("timestamp", -1).limit(limit)
+        # Сначала пробуем новый формат (search_type, params) с группировкой для уникальности
+        pipeline = [
+            {
+                "$group": {
+                    "_id": {
+                        "$cond": {
+                            "if": { "$eq": ["$search_type", "keyword"] },
+                            "then": "$params.query",
+                            "else": {
+                                "$cond": {
+                                    "if": { "$eq": ["$search_type", "genre"] },
+                                    "then": { "$concat": ["genre:", { "$toString": "$params.category_id" }] },
+                                    "else": {
+                                        "$cond": {
+                                            "if": { "$eq": ["$search_type", "year"] },
+                                            "then": { "$toString": "$params.year" },
+                                            "else": "unknown"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "latest_timestamp": { "$max": "$timestamp" },
+                    "search_type": { "$first": "$search_type" },
+                    "params": { "$first": "$params" },
+                    "_original_id": { "$first": "$_id" }
+                }
+            },
+            { "$sort": { "latest_timestamp": -1 } },
+            { "$limit": limit }
+        ]
+        
+        cursor = collection.aggregate(pipeline)
         result = []
         
         for doc in cursor:
             clean_doc = {
-                "_id": str(doc["_id"])
+                "_id": str(doc["_original_id"])
             }
             
             # Обрабатываем новый формат
@@ -138,67 +170,58 @@ def get_recent_queries(limit: int = 5):
                 else:
                     clean_doc["query"] = "unknown"
             
-            # Обрабатываем старый формат для обратной совместимости
-            elif "query" in doc:
-                clean_doc["query"] = doc["query"]
-                
-                # Копируем другие поля если они есть
-                if "year_from" in doc:
-                    clean_doc["year_from"] = doc["year_from"]
-                if "year_to" in doc:
-                    clean_doc["year_to"] = doc["year_to"]
-                if "genres" in doc:
-                    clean_doc["genres"] = doc["genres"]
-            
             # Обрабатываем timestamp
-            if "timestamp" in doc:
-                if hasattr(doc["timestamp"], 'isoformat'):
-                    clean_doc["timestamp"] = doc["timestamp"].isoformat()
-                elif isinstance(doc["timestamp"], str):
-                    clean_doc["timestamp"] = doc["timestamp"]
+            if "latest_timestamp" in doc:
+                if hasattr(doc["latest_timestamp"], 'isoformat'):
+                    clean_doc["timestamp"] = doc["latest_timestamp"].isoformat()
+                elif isinstance(doc["latest_timestamp"], str):
+                    clean_doc["timestamp"] = doc["latest_timestamp"]
                 else:
-                    clean_doc["timestamp"] = str(doc["timestamp"])
-            elif "last_searched" in doc:
-                if hasattr(doc["last_searched"], 'isoformat'):
-                    clean_doc["timestamp"] = doc["last_searched"].isoformat()
-                elif isinstance(doc["last_searched"], str):
-                    clean_doc["timestamp"] = doc["last_searched"]
-                else:
-                    clean_doc["timestamp"] = str(doc["last_searched"])
+                    clean_doc["timestamp"] = str(doc["latest_timestamp"])
             else:
                 clean_doc["timestamp"] = datetime.now(timezone.utc).isoformat()
             
             result.append(clean_doc)
         
-        # Если результатов нет в новом формате, пробуем старый формат с last_searched
+        # Если результатов нет в новом формате, пробуем старый формат с группировкой для уникальности
         if len(result) == 0:
-            cursor = collection.find().sort("last_searched", -1).limit(limit)
-            for doc in cursor:
-                if "query" in doc:
-                    clean_doc = {
-                        "_id": str(doc["_id"])
+            pipeline = [
+                {
+                    "$group": {
+                        "_id": "$query",
+                        "latest_timestamp": { "$max": { "$ifNull": ["$timestamp", "$last_searched"] } },
+                        "year_from": { "$first": "$year_from" },
+                        "year_to": { "$first": "$year_to" },
+                        "genres": { "$first": "$genres" },
+                        "_original_id": { "$first": "$_id" }
                     }
-                    
-                    # Копируем другие поля если они есть
-                    if "year_from" in doc:
-                        clean_doc["year_from"] = doc["year_from"]
-                    if "year_to" in doc:
-                        clean_doc["year_to"] = doc["year_to"]
-                    if "genres" in doc:
-                        clean_doc["genres"] = doc["genres"]
-                    
-                    # Обрабатываем timestamp
-                    if "last_searched" in doc:
-                        if hasattr(doc["last_searched"], 'isoformat'):
-                            clean_doc["timestamp"] = doc["last_searched"].isoformat()
-                        elif isinstance(doc["last_searched"], str):
-                            clean_doc["timestamp"] = doc["last_searched"]
-                        else:
-                            clean_doc["timestamp"] = str(doc["last_searched"])
+                },
+                { "$match": { "_id": { "$ne": None, "$ne": "" } } },
+                { "$sort": { "latest_timestamp": -1 } },
+                { "$limit": limit }
+            ]
+            
+            for doc in collection.aggregate(pipeline):
+                clean_doc = {
+                    "_id": str(doc["_original_id"]),
+                    "query": doc["_id"],
+                    "year_from": doc["year_from"],
+                    "year_to": doc["year_to"],
+                    "genres": doc["genres"] if doc["genres"] else []
+                }
+                
+                # Обрабатываем timestamp
+                if "latest_timestamp" in doc:
+                    if hasattr(doc["latest_timestamp"], 'isoformat'):
+                        clean_doc["timestamp"] = doc["latest_timestamp"].isoformat()
+                    elif isinstance(doc["latest_timestamp"], str):
+                        clean_doc["timestamp"] = doc["latest_timestamp"]
                     else:
-                        clean_doc["timestamp"] = datetime.now(timezone.utc).isoformat()
-                    
-                    result.append(clean_doc)
+                        clean_doc["timestamp"] = str(doc["latest_timestamp"])
+                else:
+                    clean_doc["timestamp"] = datetime.now(timezone.utc).isoformat()
+                
+                result.append(clean_doc)
         
         return result
     except Exception as e:

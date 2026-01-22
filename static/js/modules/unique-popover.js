@@ -1,4 +1,4 @@
-// UI модуль для управления popover с популярными запросами при наведении на "Уникальное"
+// UI модуль для управления popover с уникальными запросами при наведении на "Уникальное"
 export class UniquePopoverManager {
     constructor() {
         this.cache = null;
@@ -35,9 +35,13 @@ export class UniquePopoverManager {
         if (!uniqueBtn) {
             console.log('Trying by text content...');
             const allBtns = document.querySelectorAll('button.nav-btn');
+            console.log('All nav buttons found:', Array.from(allBtns).map(b => ({text: b.textContent, className: b.className})));
+            
             for (let btn of allBtns) {
-                if (btn.textContent.includes('Уникальное') || btn.textContent.includes('уникаль')) {
+                console.log('Checking button:', btn.textContent);
+                if (btn.textContent.includes('Уникальное') || btn.textContent.includes('уникаль') || btn.textContent.includes('??????????')) {
                     uniqueBtn = btn;
+                    console.log('Found unique button by text:', btn);
                     break;
                 }
             }
@@ -65,7 +69,7 @@ export class UniquePopoverManager {
             padding: 12px;
             min-width: 280px;
             max-width: 400px;
-            z-index: 1000;
+            z-index: 9999;
             opacity: 0;
             visibility: hidden;
             transform: translateY(-10px);
@@ -78,8 +82,9 @@ export class UniquePopoverManager {
             parent.style.position = 'relative';
         }
         
-        // Добавляем popover в родительский контейнер
-        parent.appendChild(popover);
+        // Добавляем popover в body для избежания конфликтов с dropdown CSS
+        document.body.appendChild(popover);
+        console.log('Popover added to body');
         
         this.popoverElement = popover;
         this.uniqueBtn = uniqueBtn;
@@ -135,6 +140,7 @@ export class UniquePopoverManager {
         this.hoverTimeout = setTimeout(async () => {
             console.log('Timeout triggered, calling loadAndShowPopularSearches');
             await this.loadAndShowPopularSearches();
+            console.log('Popover should be visible now:', this.isVisible);
         }, 150);
     }
     
@@ -209,29 +215,52 @@ export class UniquePopoverManager {
     
     // Загрузка данных с API
     async fetchPopularSearches() {
-        console.log('Fetching popular searches from API...');
+        console.log('Fetching unique searches from API...');
         const { MetaAPI } = await import('./meta.js');
-        const data = await MetaAPI.getPopularQueries(5);
+        const data = await MetaAPI.getUniqueQueries(5);
         console.log('API response:', data);
         return data;
     }
     
     // Показать popover
     show() {
-        if (!this.popoverElement) return;
+        if (!this.popoverElement) {
+            console.error('Popover element not found!');
+            return;
+        }
         
-        this.popoverElement.style.opacity = '1';
-        this.popoverElement.style.visibility = 'visible';
-        this.popoverElement.style.transform = 'translateY(0)';
+        if (!this.uniqueBtn) {
+            console.error('Unique button not found!');
+            return;
+        }
+        
+        // Рассчитываем позицию popover относительно кнопки
+        const buttonRect = this.uniqueBtn.getBoundingClientRect();
+        const popover = this.popoverElement;
+        
+        // Устанавливаем позицию
+        popover.style.position = 'fixed';
+        popover.style.top = (buttonRect.bottom + window.scrollY + 5) + 'px';
+        popover.style.left = (buttonRect.left + window.scrollX) + 'px';
+        popover.style.zIndex = '9999';
+        
+        console.log('Showing popover, element:', popover);
+        console.log('Button position:', buttonRect);
+        console.log('Popover position set to:', {
+            top: popover.style.top,
+            left: popover.style.left
+        });
+        
+        popover.classList.add('show');
+        this.isVisible = true;
+        console.log('Popover shown, classes:', popover.className);
     }
     
     // Скрыть popover
     hide() {
         if (!this.popoverElement) return;
         
-        this.popoverElement.style.opacity = '0';
-        this.popoverElement.style.visibility = 'hidden';
-        this.popoverElement.style.transform = 'translateY(-10px)';
+        this.popoverElement.classList.remove('show');
         this.isVisible = false;
     }
     
@@ -276,8 +305,8 @@ export class UniquePopoverManager {
             return;
         }
         
-        let html = '<div class="popular-searches-header" style="font-weight: bold; margin-bottom: 8px; color: #333;">🔥 Популярные запросы</div>';
-        html += '<div class="popular-searches-list">';
+        let html = '<div class="unique-searches-header" style="font-weight: bold; margin-bottom: 8px; color: #333;">🎯 Уникальные запросы</div>';
+        html += '<div class="unique-searches-list">';
         
         items.forEach((item, index) => {
             const displayText = this.formatSearchItem(item);
@@ -305,7 +334,7 @@ export class UniquePopoverManager {
         
         this.popoverElement.innerHTML = `
             <div class="popular-searches-empty">
-                <div class="empty-text" style="text-align: center; color: #999; font-size: 14px;">Пока нет популярных запросов</div>
+                <div class="empty-text" style="text-align: center; color: #999; font-size: 14px;">Пока нет уникальных запросов</div>
             </div>
         `;
     }
