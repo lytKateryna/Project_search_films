@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     MONGO_URL: str
     MONGO_DB: str
-    MONGO_LOG_COLLECTION: str = "logs"
+    MONGO_LOG_COLLECTION: str
     MONGO_LOG_STATS: str = "stats"
 
     TMDB_API_KEY: str
