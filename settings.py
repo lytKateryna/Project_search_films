@@ -12,13 +12,13 @@ class Settings(BaseSettings):
 
     MONGO_URL: str
     MONGO_DB: str
-    MONGO_LOG_COLLECTION: str
+    MONGO_LOG_COLLECTION: str = "logs"
     MONGO_LOG_STATS: str = "stats"
 
     TMDB_API_KEY: str
     # MONGODB_URL_EDIT: str
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"),
         env_file_encoding="utf-8",
     )
 

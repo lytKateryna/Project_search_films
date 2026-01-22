@@ -1,4 +1,8 @@
 # Импортируем нужные библиотеки
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# добавляет корень проекта в пути поиска модулей Python, чтобы импорты работали независимо от того, откуда запущен файл
 
 from pymongo import MongoClient
 from datetime import datetime, timezone
